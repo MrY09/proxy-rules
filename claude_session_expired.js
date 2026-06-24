@@ -13,17 +13,23 @@ delete headers["content-encoding"];
 
 headers["Content-Type"] = "application/json; charset=utf-8";
 headers["Cache-Control"] = "no-store";
+headers["WWW-Authenticate"] = 'Bearer error="invalid_token", error_description="Session expired"';
 
-// 关键：Set-Cookie 必须是响应头，不是请求头。
-// 这里先严格按照 Charles 教程的两个 cookie 来。
+// 先只按教程里的两个 cookie 清
 headers["Set-Cookie"] = [
-  "sessionKey=; Path=/; Domain=.claude.ai; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax",
-  "routingHint=; Path=/; Domain=.claude.ai; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax"
+  "sessionKey=; Path=/; Domain=.claude.ai; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+  "routingHint=; Path=/; Domain=.claude.ai; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Secure; HttpOnly; SameSite=Lax"
 ];
 
-const body = '{"type":"error","error":{"type":"session_expired","message":"Session expired"}}';
+const body = JSON.stringify({
+  type: "error",
+  error: {
+    type: "session_expired",
+    message: "Session expired"
+  }
+});
 
-$notify("Claude Reset", "script hit", $request.url);
+$notify("Claude Reset", "401 + expire cookies", $request.url);
 
 $done({
   status: "HTTP/1.1 401 Unauthorized",
